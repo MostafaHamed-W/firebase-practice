@@ -1,27 +1,50 @@
 import 'package:auth_buttons/auth_buttons.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_practice/core/constants.dart';
+
+import 'package:firebase_practice/views/auth/widgets/auth_button.dart';
+import 'package:firebase_practice/views/auth/widgets/auth_textfield.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 
-class Loginview extends StatelessWidget {
+class Loginview extends StatefulWidget {
   const Loginview({super.key});
+
+  @override
+  State<Loginview> createState() => _LoginviewState();
+}
+
+class _LoginviewState extends State<Loginview> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  GlobalKey<FormState> formState = GlobalKey<FormState>();
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: [
-                Column(
+
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[200],
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: Container(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            children: [
+              Form(
+                key: formState,
+                child: Column(
                   children: [
                     SvgPicture.asset(
                       'assets/images/login_image.svg',
@@ -42,36 +65,32 @@ class Loginview extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    TextFormField(
-                      // style: const TextStyle(color: kMainColor),
-                      onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
-                      decoration: InputDecoration(
-                        hintText: 'Email',
-                        hintStyle: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 15,
-                        ),
-                        prefixIcon: const Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                      ),
+                    AuthTextField(
+                      hintText: 'Email',
+                      prefixIcon: Icons.person,
+                      obsecureText: false,
+                      controller: emailController,
+                      validator: (value) {
+                        if (value == '') {
+                          return 'Email cannot be empty!';
+                        } else {
+                          return null;
+                        }
+                      },
                     ),
                     const SizedBox(height: 10),
-                    TextFormField(
-                      // style: const TextStyle(color: kMainColor),
-                      onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        hintStyle: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 15,
-                        ),
-                        prefixIcon: const Icon(Icons.lock_open),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                      ),
+                    AuthTextField(
+                      hintText: 'Password',
+                      prefixIcon: Icons.lock_open,
+                      obsecureText: true,
+                      controller: passwordController,
+                      validator: (value) {
+                        if (value == '') {
+                          return 'Password cannot be empty!';
+                        } else {
+                          return null;
+                        }
+                      },
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
@@ -83,24 +102,50 @@ class Loginview extends StatelessWidget {
                         ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      child: Container(
-                        width: width * 0.45,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          color: kMainColor,
-                          borderRadius: BorderRadius.circular(
-                            25,
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'LOG IN',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
+                    AuthButton(
+                      text: 'LOG IN',
+                      onPress: () async {
+                        if (formState.currentState!.validate()) {
+                          try {
+                            final credential =
+                                await FirebaseAuth.instance.signInWithEmailAndPassword(
+                              email: emailController.text,
+                              password: passwordController.text,
+                            );
+                            if (credential.user!.emailVerified) {
+                              Navigator.pushReplacementNamed(context, 'home');
+                            } else {
+                              credential.user!.sendEmailVerification();
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.error,
+                                animType: AnimType.rightSlide,
+                                title: 'Email not verified',
+                                desc:
+                                    'Please verify your email first.\na message of verification link has sent to your email',
+                              ).show();
+                            }
+                          } on FirebaseAuthException catch (e) {
+                            if (e.code == 'user-not-found') {
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.error,
+                                animType: AnimType.rightSlide,
+                                title: 'Wrong User',
+                                desc: 'No user found for that email.',
+                              ).show();
+                            } else if (e.code == 'wrong-password') {
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.error,
+                                animType: AnimType.rightSlide,
+                                title: 'Wrong Password',
+                                desc: 'Wrong password provided for that user.',
+                              ).show();
+                            }
+                          }
+                        }
+                      },
                     ),
                     const SizedBox(height: 30),
                     const Text(
@@ -140,29 +185,33 @@ class Loginview extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 25),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 25),
+                      child: InkWell(
+                        onTap: () => Navigator.of(context).pushReplacementNamed('signup'),
+                        child: RichText(
+                          text: const TextSpan(
+                            text: "Don't have an account?\t",
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Sign Up',
+                                style: TextStyle(color: kMainColor, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
-                )
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 25),
-            child: RichText(
-              text: const TextSpan(
-                text: "Don't have an account?\t",
-                style: TextStyle(
-                  color: Colors.black,
                 ),
-                children: [
-                  TextSpan(
-                    text: 'Sign Up',
-                    style: TextStyle(color: kMainColor, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
+              )
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
