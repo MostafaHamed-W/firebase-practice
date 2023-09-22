@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Firebase Practice</string>
+    <string name="facebook_app_id">1028993281468900</string>
+    <string name="facebook_client_token">dd8d7228c46a88a85eab611d80e28b4c</string>
+    <string name="fb_login_protocol_scheme">6e603a03488303593c108677b237a17b</string>
+</resources>

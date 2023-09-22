@@ -6,8 +6,10 @@ import 'package:firebase_practice/core/constants.dart';
 import 'package:firebase_practice/views/auth/widgets/auth_button.dart';
 import 'package:firebase_practice/views/auth/widgets/auth_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class Loginview extends StatefulWidget {
   const Loginview({super.key});
@@ -20,6 +22,48 @@ class _LoginviewState extends State<Loginview> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   GlobalKey<FormState> formState = GlobalKey<FormState>();
+
+  Future signInWithGoogle() async {
+    // Trigger the authentication flow
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+    // to avoid errors that happens because googleUser is null value when user
+    // dismiss the login google windows without loging in
+    if (googleUser == null) {
+      return;
+    }
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+    // Create a new credential
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
+
+    // Once signed in, return the UserCredential
+    await FirebaseAuth.instance.signInWithCredential(credential);
+    Navigator.pushReplacementNamed(context, 'home');
+  }
+
+  Future signInWithFacebook() async {
+    // Trigger the sign-in flow
+    final LoginResult loginResult = await FacebookAuth.instance.login();
+
+    if (loginResult == null) {
+      return;
+    }
+
+    // Create a credential from the access token
+    final OAuthCredential facebookAuthCredential =
+        FacebookAuthProvider.credential(loginResult.accessToken?.token ?? '');
+
+    // Once signed in, return the UserCredential
+    FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+    Navigator.pushReplacementNamed(context, 'home');
+  }
+
   @override
   void dispose() {
     emailController.dispose();
@@ -158,7 +202,7 @@ class _LoginviewState extends State<Loginview> {
                       children: [
                         FacebookAuthButton(
                           text: 'Facebook',
-                          onPressed: () {},
+                          onPressed: signInWithFacebook,
                           style: const AuthButtonStyle(
                             elevation: 0,
                             width: 120,
@@ -171,7 +215,7 @@ class _LoginviewState extends State<Loginview> {
                         ),
                         GoogleAuthButton(
                           text: 'Google',
-                          onPressed: () {},
+                          onPressed: signInWithGoogle,
                           style: const AuthButtonStyle(
                             elevation: 0,
                             width: 120,
