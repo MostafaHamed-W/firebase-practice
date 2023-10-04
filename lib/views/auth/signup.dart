@@ -31,7 +31,7 @@ class _SignupViewState extends State<SignupView> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[200],
-        body: Container(
+        body: SizedBox(
           child: ListView(
             children: [
               Padding(
@@ -66,6 +66,7 @@ class _SignupViewState extends State<SignupView> {
                           if (value == '') {
                             return 'Email cannot be empty, please Enter a valid email!';
                           }
+                          return null;
                         },
                       ),
                       const SizedBox(height: 20),
@@ -85,6 +86,7 @@ class _SignupViewState extends State<SignupView> {
                           if (value == '') {
                             return 'Password is empty, please enter valid password!';
                           }
+                          return null;
                         },
                       ),
                       const SizedBox(height: 20),
@@ -96,6 +98,7 @@ class _SignupViewState extends State<SignupView> {
                           if (value != _firstPassValue) {
                             return "Password didn't match";
                           }
+                          return null;
                         },
                       ),
                       const SizedBox(height: 30),
@@ -104,12 +107,11 @@ class _SignupViewState extends State<SignupView> {
                         onPress: () async {
                           if (formState.currentState!.validate()) {
                             try {
-                              final credential =
-                                  await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                              await FirebaseAuth.instance.createUserWithEmailAndPassword(
                                 email: emailController.text,
                                 password: passwordController.text,
                               );
-                              Navigator.pushReplacementNamed(context, 'login');
+                              if (context.mounted) Navigator.pushReplacementNamed(context, 'login');
                             } on FirebaseAuthException catch (e) {
                               if (e.code == 'weak-password') {
                                 AwesomeDialog(
@@ -134,10 +136,10 @@ class _SignupViewState extends State<SignupView> {
                                     .show();
                               }
                             } catch (e) {
-                              print(e);
+                              debugPrint(e.toString());
                             }
                           } else {
-                            print('Some thing went wrong');
+                            debugPrint('Some thing went wrong');
                           }
                         },
                       ),

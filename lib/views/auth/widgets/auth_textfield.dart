@@ -1,4 +1,3 @@
-import 'package:firebase_practice/core/constants.dart';
 import 'package:flutter/material.dart';
 
 class AuthTextField extends StatelessWidget {
