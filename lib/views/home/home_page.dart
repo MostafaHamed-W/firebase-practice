@@ -13,6 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     String? currentUserEmail = FirebaseAuth.instance.currentUser?.email ?? 'unknown email';

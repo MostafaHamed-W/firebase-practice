@@ -158,13 +158,54 @@ class _LoginviewState extends State<Loginview> {
                             }
                           },
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              'Forgot Password?',
-                              style: TextStyle(fontSize: 13),
+                        InkWell(
+                          onTap: () async {
+                            if (emailController.text == '') {
+                              AwesomeDialog(
+                                      context: mounted ? context : context,
+                                      dialogType: DialogType.error,
+                                      animType: AnimType.rightSlide,
+                                      title: 'Email is empty',
+                                      desc: 'Please enter email to reset password',
+                                      btnOkOnPress: () {},
+                                      btnOkColor: Colors.red)
+                                  .show();
+                            } else {
+                              try {
+                                await FirebaseAuth.instance
+                                    .sendPasswordResetEmail(email: emailController.text);
+                                await AwesomeDialog(
+                                        context: mounted ? context : context,
+                                        dialogType: DialogType.success,
+                                        animType: AnimType.rightSlide,
+                                        title: 'Email has been sent',
+                                        desc:
+                                            'Email to reset password is already send to your email',
+                                        btnOkOnPress: () {},
+                                        btnOkColor: Colors.green)
+                                    .show();
+                              } catch (e) {
+                                AwesomeDialog(
+                                        context: mounted ? context : context,
+                                        dialogType: DialogType.error,
+                                        animType: AnimType.rightSlide,
+                                        title: 'Invalid Email',
+                                        desc: 'Please enter a valid email to reset password',
+                                        btnOkOnPress: () {},
+                                        btnOkColor: Colors.red)
+                                    .show();
+                                print(e);
+                              }
+                            }
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(fontSize: 13),
+                              ),
                             ),
                           ),
                         ),
@@ -223,6 +264,9 @@ class _LoginviewState extends State<Loginview> {
                                     desc: 'Wrong password provided for that user.',
                                   ).show();
                                 } else {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
                                   AwesomeDialog(
                                     context: context,
                                     dialogType: DialogType.error,
